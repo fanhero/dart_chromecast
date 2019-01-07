@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'dart:convert' show utf8;
+import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
-import 'package:xml/xml.dart' as xml;
 import 'package:observable/observable.dart';
 
 /// Only Chromecast Type is supported
@@ -57,37 +56,52 @@ class CastDevice extends ChangeNotifier {
   CastModel castModel;
 
   CastDevice({this.name, this.type, this.host, this.port, this.attr}) {
-    modelName = utf8.decode(attr['md']);
-    friendlyName = utf8.decode(attr['fn']);
-
-    switch (modelName) {
-      case "Google Home":
-        castModel = CastModel.GoogleHome;
-        break;
-      case "Google Home Hub":
-        castModel = CastModel.GoogleHub;
-        break;
-      case "Google Home Mini":
-        castModel = CastModel.GoogleMini;
-        break;
-      case "Google Home Max":
-        castModel = CastModel.GoogleMax;
-        break;
-      case "Chromecast":
-        castModel = CastModel.ChromeCast;
-        break;
-      case "Chromecast Audio":
-        castModel = CastModel.ChromeCastAudio;
-        break;
-      case "Google Cast Group":
-        castModel = CastModel.CastGroup;
-        break;
-      default:
-        castModel = CastModel.NonGoogle;
-        break;
-    }
+    initDeviceInfo();
   }
 
+  void initDeviceInfo() async {
+    if (CastDeviceType.ChromeCast == deviceType) {
+      if (null == attr || null == attr['md'] || null == attr['fn']) {
+        // Attributes are not guaranteed to be set, if not set fetch them via the eureka_info url
+        // Possible parameters: version,audio,name,build_info,detail,device_info,net,wifi,setup,settings,opt_in,opencast,multizone,proxy,night_mode_params,user_eq,room_equalizer
+        http.Response response = await http.get('http://${host}:8008/setup/eureka_info?params=name,device_info');
+        Map deviceInfo = jsonDecode(response.body);
+        friendlyName = deviceInfo['name'];
+        modelName = deviceInfo['device_info']['model_name'];
+      }
+      else {
+        modelName = utf8.decode(attr['md']);
+        friendlyName = utf8.decode(attr['fn']);
+      }
+
+      switch (modelName) {
+        case "Google Home":
+          castModel = CastModel.GoogleHome;
+          break;
+        case "Google Home Hub":
+          castModel = CastModel.GoogleHub;
+          break;
+        case "Google Home Mini":
+          castModel = CastModel.GoogleMini;
+          break;
+        case "Google Home Max":
+          castModel = CastModel.GoogleMax;
+          break;
+        case "Chromecast":
+          castModel = CastModel.ChromeCast;
+          break;
+        case "Chromecast Audio":
+          castModel = CastModel.ChromeCastAudio;
+          break;
+        case "Google Cast Group":
+          castModel = CastModel.CastGroup;
+          break;
+        default:
+          castModel = CastModel.NonGoogle;
+          break;
+      }
+    }
+  }
 
   CastDeviceType get deviceType {
     if (type.startsWith('_googlecast._tcp')) {
@@ -97,8 +111,6 @@ class CastDevice extends ChangeNotifier {
     }
     return CastDeviceType.Unknown;
   }
-
-
 
   /// Comparator
   /// In a List, the order will be:

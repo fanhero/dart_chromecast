@@ -65,9 +65,9 @@ class CastSender extends Object {
   /// OVERRIDE FOR PRINT
   ///
   /// This is there so print() is disabled in release versions. NOT FOR USE.
-  void print(dynamic theString) {}
+  //  void print(dynamic theString) {}
 
-  /// The callback you set is called everytime:
+  /// The callback you set is called every time:
   ///
   /// * the volume (or bass/treble) is changed
   /// * media playback changes (new song, etc.)
@@ -206,7 +206,6 @@ class CastSender extends Object {
 
   /// PLAY/PAUSE feature, uses [play()] and [pause()]
   void togglePause() {
-    print(_castSession.toString());
     if (true == _castSession?.castMediaStatus?.isPlaying) {
       print('PAUSE');
       pause();
@@ -280,7 +279,9 @@ class CastSender extends Object {
         if ('CLOSE' == payloadMap['type']) {
           _dispose();
           connectionDidClose = true;
-          _volumeChangedCallback();
+          if (null != _volumeChangedCallback) {
+            _volumeChangedCallback();
+          }
         }
         if ('RECEIVER_STATUS' == payloadMap['type']) {
           _handleReceiverStatus(payloadMap);
@@ -386,7 +387,7 @@ class CastSender extends Object {
     }
 
     // Only update UI if new values
-    if (refresh) {
+    if (refresh && null != _volumeChangedCallback) {
       _volumeChangedCallback();
     }
 
@@ -486,7 +487,9 @@ class CastSender extends Object {
                 _castSession.castMediaStatus.media['metadata']['title'];
             if (newPlaying != _whatIsPlaying) {
               _whatIsPlaying = newPlaying;
-              _volumeChangedCallback();
+              if (null != _volumeChangedCallback) {
+                _volumeChangedCallback();
+              }
             }
 
             print(_whatIsPlaying);
