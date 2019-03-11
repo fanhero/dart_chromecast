@@ -18,11 +18,11 @@ abstract class CastChannel {
   CastChannel(this._socket, this._sourceId, this._destinationId, this._namespace);
 
   CastChannel.CreateWithSocket(Socket socket, { String sourceId, String destinationId, String namespace}) :
-      _socket = socket,
-      _sourceId = sourceId,
-      _destinationId = destinationId,
-      _namespace = namespace;
-  
+        _socket = socket,
+        _sourceId = sourceId,
+        _destinationId = destinationId,
+        _namespace = namespace;
+
   void sendMessage(Map payload) async {
 
     payload['requestId'] = _requestId;
