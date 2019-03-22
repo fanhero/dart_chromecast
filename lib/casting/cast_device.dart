@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 import 'dart:convert' show utf8;
 import 'dart:typed_data';
@@ -47,6 +47,10 @@ class CastDevice extends ChangeNotifier {
   }
 
   void initDeviceInfo() async {
+
+    var url = "http://${host}:8008/setup/eureka_info?params=name,device_info";
+
+
     if (CastDeviceType.ChromeCast == deviceType) {
       if (null != attr && null != attr['fn']) {
         _friendlyName = utf8.decode(attr['fn']);
@@ -55,9 +59,8 @@ class CastDevice extends ChangeNotifier {
         // Attributes are not guaranteed to be set, if not set fetch them via the eureka_info url
         // Possible parameters: version,audio,name,build_info,detail,device_info,net,wifi,setup,settings,opt_in,opencast,multizone,proxy,night_mode_params,user_eq,room_equalizer
         try {
-          http.Response response = await http.get(
-              'http://${host}:8008/setup/eureka_info?params=name,device_info');
-          Map deviceInfo = jsonDecode(response.body);
+          http.Response response = await http.get(url);
+          Map deviceInfo = convert.jsonDecode(response.body);
           _friendlyName = deviceInfo['name'];
         }
         catch(exception) {
