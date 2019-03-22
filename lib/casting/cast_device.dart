@@ -51,7 +51,7 @@ class CastDevice extends ChangeNotifier {
     var url = "http://${host}:8008/setup/eureka_info?params=name,device_info";
 
 
-    if (CastDeviceType.ChromeCast == deviceType) {
+    if (CastDeviceType.ChromeCast == deviceType) {/*
       if (null != attr && null != attr['fn']) {
         _friendlyName = utf8.decode(attr['fn']);
       }
@@ -66,7 +66,7 @@ class CastDevice extends ChangeNotifier {
         catch(exception) {
           _friendlyName = 'Unknown';
         }
-      }
+      }*/
     }
     notifyChange();
   }
@@ -81,9 +81,16 @@ class CastDevice extends ChangeNotifier {
     return CastDeviceType.Unknown;
   }
 
-  String get friendlyName {
-    if (null != _friendlyName) {
-      return _friendlyName;
+  Future<String> get friendlyName async {
+    var url = "http://${host}:8008/setup/eureka_info?params=name,device_info";
+
+    try {
+      http.Response response = await http.get(url);
+      Map deviceInfo = convert.jsonDecode(response.body);
+      return deviceInfo['name'];
+    }
+    catch(exception) {
+      _friendlyName = 'Unknown';
     }
     return name;
   }
