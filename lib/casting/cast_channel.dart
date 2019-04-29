@@ -7,7 +7,6 @@ import '../proto/cast_channel.pb.dart';
 import './../writer.dart';
 
 abstract class CastChannel {
-
   static int _requestId = 1;
 
   final Socket _socket;
@@ -15,16 +14,17 @@ abstract class CastChannel {
   String _destinationId;
   String _namespace;
 
-  CastChannel(this._socket, this._sourceId, this._destinationId, this._namespace);
+  CastChannel(
+      this._socket, this._sourceId, this._destinationId, this._namespace);
 
-  CastChannel.CreateWithSocket(Socket socket, { String sourceId, String destinationId, String namespace}) :
-        _socket = socket,
+  CastChannel.CreateWithSocket(Socket socket,
+      {String sourceId, String destinationId, String namespace})
+      : _socket = socket,
         _sourceId = sourceId,
         _destinationId = destinationId,
         _namespace = namespace;
 
   void sendMessage(Map payload) async {
-
     payload['requestId'] = _requestId;
 
     CastMessage castMessage = CastMessage();
@@ -36,25 +36,22 @@ abstract class CastChannel {
     castMessage.payloadUtf8 = jsonEncode(payload);
 
     Uint8List bytes = castMessage.writeToBuffer();
-    Uint32List headers = Uint32List.fromList(writeUInt32BE(List<int>(4), bytes.lengthInBytes));
-    Uint32List fullData = Uint32List.fromList(headers.toList()..addAll(bytes.toList()));
+    Uint32List headers =
+        Uint32List.fromList(writeUInt32BE(List<int>(4), bytes.lengthInBytes));
+    Uint32List fullData =
+        Uint32List.fromList(headers.toList()..addAll(bytes.toList()));
 
     if ('PING' != payload['type']) {
+      // print('Send: ${castMessage.toDebugString()}');
+      // print('List: ${fullData.toList().toString()}');
 
-      print('Send: ${castMessage.toDebugString()}');
-      print('List: ${fullData.toList().toString()}');
-
-    }
-    else {
-
-      print('PING');
+    } else {
+      // print('PING');
 
     }
 
     _socket.add(fullData);
 
     _requestId++;
-
   }
-
 }
