@@ -4,6 +4,7 @@ import 'dart:convert' show utf8;
 import 'dart:typed_data';
 
 import 'package:observable/observable.dart';
+import 'package:logging/logging.dart';
 
 enum CastDeviceType {
   Unknown,
@@ -11,7 +12,19 @@ enum CastDeviceType {
   AppleTV,
 }
 
+enum GoogleCastModelType {
+  GoogleHub,
+  GoogleHome,
+  GoogleMini,
+  GoogleMax,
+  ChromeCast,
+  ChromeCastAudio,
+  NonGoogle,
+  CastGroup,
+}
+
 class CastDevice extends ChangeNotifier {
+  final Logger log = new Logger('CastDevice');
 
   final String name;
   final String type;
@@ -33,37 +46,38 @@ class CastDevice extends ChangeNotifier {
   final Map<String, Uint8List> attr;
 
   String _friendlyName;
+  String _modelName;
 
   CastDevice({
     this.name,
     this.type,
     this.host,
     this.port,
-    this.attr
+    this.attr,
   }) {
-
     initDeviceInfo();
-
   }
 
   void initDeviceInfo() async {
-
     var url = "http://${host}:8008/setup/eureka_info?params=name,device_info";
-
 
     if (CastDeviceType.ChromeCast == deviceType) {
       if (null != attr && null != attr['fn']) {
         _friendlyName = utf8.decode(attr['fn']);
-      }
-      else {
+        if (null != attr['md']) {
+          _modelName = utf8.decode(attr['md']);
+        }
+      } else {
         // Attributes are not guaranteed to be set, if not set fetch them via the eureka_info url
         // Possible parameters: version,audio,name,build_info,detail,device_info,net,wifi,setup,settings,opt_in,opencast,multizone,proxy,night_mode_params,user_eq,room_equalizer
         try {
           http.Response response = await http.get(url);
           Map deviceInfo = convert.jsonDecode(response.body);
           _friendlyName = deviceInfo['name'];
-        }
-        catch(exception) {
+          if (null != deviceInfo['model_name']) {
+            _modelName = deviceInfo['model_name'];
+          }
+        } catch (exception) {
           _friendlyName = 'Unknown';
         }
       }
@@ -72,10 +86,9 @@ class CastDevice extends ChangeNotifier {
   }
 
   CastDeviceType get deviceType {
-    if (type.startsWith('_googlecast._tcp')) {
+    if (type.contains('_googlecast._tcp')) {
       return CastDeviceType.ChromeCast;
-    }
-    else if (type.startsWith('_airplay._tcp')) {
+    } else if (type.contains('_airplay._tcp')) {
       return CastDeviceType.AppleTV;
     }
     return CastDeviceType.Unknown;
@@ -88,4 +101,27 @@ class CastDevice extends ChangeNotifier {
     return name;
   }
 
+  String get modelName => _modelName;
+
+  GoogleCastModelType get googleModelType {
+    switch (modelName) {
+      case "Google Home":
+        return GoogleCastModelType.GoogleHome;
+      case "Google Home Hub":
+        return GoogleCastModelType.GoogleHub;
+        break;
+      case "Google Home Mini":
+        return GoogleCastModelType.GoogleMini;
+      case "Google Home Max":
+        return GoogleCastModelType.GoogleMax;
+      case "Chromecast":
+        return GoogleCastModelType.ChromeCast;
+      case "Chromecast Audio":
+        return GoogleCastModelType.ChromeCastAudio;
+      case "Google Cast Group":
+        return GoogleCastModelType.CastGroup;
+      default:
+        return GoogleCastModelType.NonGoogle;
+    }
+  }
 }
