@@ -1,7 +1,4 @@
-
-
 class CastMedia {
-
   final String contentId;
   String title;
   bool autoPlay = true;
@@ -37,5 +34,4 @@ class CastMedia {
       }
     };
   }
-
 }
