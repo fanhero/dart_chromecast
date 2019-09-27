@@ -240,6 +240,14 @@ class CastSender extends Object {
     log.fine(payload.toString());
     if (null == _mediaChannel &&
         true == payload['status']?.containsKey('applications')) {
+      // cast session lost if another device connects while casting
+      if (null == _castSession) {
+        final String error = 'Cast session lost';
+        castSessionController.addError(error);
+        castMediaStatusController.addError(error);
+        return;
+      }
+      
       // re-create the channel with the transportId the chromecast just sent us
       if (!_castSession.isConnected) {
         _castSession = _castSession
